@@ -1,0 +1,369 @@
+@import url('https://fonts.loli.net/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;600;700&family=DM+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Apple-inspired neutrals */
+    --background: 0 0% 99%;
+    --foreground: 240 10% 8%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 8%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 8%;
+
+    /* Deep indigo — Apple's signature accent */
+    --primary: 224 76% 48%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 10% 8%;
+
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+
+    --accent: 240 5% 96%;
+    --accent-foreground: 240 10% 8%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 224 76% 48%;
+
+    --radius: 0.75rem;
+
+    /* Sidebar — clean white with subtle depth */
+    --sidebar-background: 240 6% 97%;
+    --sidebar-foreground: 240 10% 20%;
+    --sidebar-primary: 224 76% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 5% 93%;
+    --sidebar-accent-foreground: 240 10% 8%;
+    --sidebar-border: 240 6% 90%;
+    --sidebar-ring: 224 76% 48%;
+    --sidebar-muted: 240 4% 60%;
+
+    /* Semantic accent colors — muted, Apple-like */
+    --accent-blue: 224 76% 48%;
+    --accent-green: 160 72% 38%;
+    --accent-orange: 24 94% 50%;
+    --accent-pink: 330 80% 55%;
+    --accent-purple: 270 60% 50%;
+    --accent-teal: 174 60% 40%;
+    --accent-red: 0 72% 51%;
+    --accent-yellow: 40 90% 50%;
+
+    /* Surface layers */
+    --surface-primary: 0 0% 100%;
+    --surface-secondary: 240 5% 97%;
+    --surface-elevated: 0 0% 100%;
+
+    /* Shadows — Apple-style layered, soft */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
+    --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow-elevated: 0 12px 40px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.05);
+
+    /* Glass effects */
+    --glass-bg: rgba(255, 255, 255, 0.72);
+    --glass-border: rgba(255, 255, 255, 0.18);
+
+    /* Font families — clean Inter as base */
+    --font-display: 'Inter', 'Noto Sans SC', -apple-system, sans-serif;
+    --font-body: 'Inter', 'Noto Sans SC', -apple-system, sans-serif;
+    --font-mono: 'DM Mono', ui-monospace, monospace;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: linear-gradient(180deg, hsl(240 5% 97%) 0%, hsl(0 0% 99%) 100%);
+    min-height: 100vh;
+  }
+
+  /* Subtle noise texture — barely visible, adds depth */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.015;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 256px 256px;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  /* Typography scale — Apple-style large, bold numbers */
+  @media (max-width: 768px) {
+    body {
+      font-size: 14px;
+    }
+  }
+}
+
+/* ─── Glass morphism utilities ─── */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--glass-border);
+}
+
+.glass-subtle {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+}
+
+.glass-heavy {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+}
+
+/* ─── Card styles ─── */
+.card-glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: var(--shadow-card);
+  border-radius: var(--radius);
+}
+
+.card-solid {
+  background: var(--surface-primary);
+  border: 1px solid hsl(240 6% 92%);
+  box-shadow: var(--shadow-card);
+  border-radius: var(--radius);
+}
+
+.card-elevated {
+  background: var(--surface-primary);
+  border: 1px solid hsl(240 6% 92%);
+  box-shadow: var(--shadow-elevated);
+  border-radius: var(--radius);
+}
+
+/* ─── Skeuomorphic inset / pressed ─── */
+.inset-subtle {
+  background: hsl(240 5% 96%);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06), inset 0 1px 2px rgba(0, 0, 0, 0.04);
+  border-radius: var(--radius);
+}
+
+/* ─── Hover lift — Apple-style ─── */
+.card-hover-lift {
+  transition: box-shadow 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              transform 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.card-hover-lift:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-2px);
+}
+
+@media (hover: none) {
+  .card-hover-lift:hover {
+    box-shadow: var(--shadow-card);
+    transform: none;
+  }
+}
+
+/* ─── Staggered animations ─── */
+.stagger-children > * {
+  animation: fade-up 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 80ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 160ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 240ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 320ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 400ms; }
+.stagger-children > *:nth-child(7) { animation-delay: 480ms; }
+.stagger-children > *:nth-child(8) { animation-delay: 560ms; }
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.3);
+    opacity: 0;
+  }
+}
+
+/* ─── Sidebar active pill — Apple sidebar style ─── */
+.sidebar-pill-active {
+  background: hsl(224 76% 48%);
+  color: white !important;
+  border-radius: 10px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+}
+
+/* ─── Accent left borders ─── */
+.card-accent-blue { border-left: 3px solid hsl(var(--accent-blue)); }
+.card-accent-green { border-left: 3px solid hsl(var(--accent-green)); }
+.card-accent-orange { border-left: 3px solid hsl(var(--accent-orange)); }
+.card-accent-pink { border-left: 3px solid hsl(var(--accent-pink)); }
+.card-accent-purple { border-left: 3px solid hsl(var(--accent-purple)); }
+.card-accent-teal { border-left: 3px solid hsl(var(--accent-teal)); }
+
+/* ─── Apple-style number display ─── */
+.num-display {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Toggle / segmented control ─── */
+.segment {
+  display: inline-flex;
+  background: hsl(240 5% 96%);
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+.segment-item {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: hsl(240 4% 46%);
+  transition: all 200ms;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+.segment-item:hover {
+  color: hsl(240 10% 8%);
+}
+.segment-item.active {
+  background: white;
+  color: hsl(240 10% 8%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* ─── Input / field styling ─── */
+.field-apple {
+  background: hsl(240 5% 96%);
+  border: 1px solid hsl(240 6% 90%);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 14px;
+  transition: border-color 200ms, box-shadow 200ms;
+  outline: none;
+  width: 100%;
+}
+.field-apple:focus {
+  border-color: hsl(224 76% 48%);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+/* ─── Mobile table scroll hint ─── */
+@media (max-width: 768px) {
+  .mobile-table-wrap {
+    position: relative;
+  }
+  .mobile-table-wrap::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 24px;
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.9));
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 200ms;
+  }
+  .mobile-table-wrap.scrolled-end::after {
+    opacity: 0;
+  }
+}
+
+/* ─── Year-end bonus button ─── */
+.year-end-bonus-btn {
+  transition: all 200ms;
+}
+@media (max-width: 768px) {
+  .year-end-bonus-btn {
+    bottom: 1rem !important;
+    left: 1rem !important;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.75rem !important;
+  }
+}
+
+/* ─── Smooth scrollbar ─── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(240 4% 80%);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(240 4% 65%);
+}
+
+/* ─── Focus ring — Apple blue ─── */
+:focus-visible {
+  outline: 2px solid hsl(224 76% 48%);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
