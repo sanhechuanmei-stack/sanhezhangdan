@@ -21,6 +21,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { useAppData } from '@/hooks/useAppData';
 import { useCalculations } from '@/hooks/useCalculations';
+import { useAuth } from '@/context/AuthContext';
 import { calcPartnerExpectedShare, calcPartnerPaid, calcProjectFinancials } from '@/lib/calculations';
 import type { Project } from '@/types';
 
@@ -205,8 +206,15 @@ export function ProjectSharingCards({ offlineProjectId, selectedPeriod }: Projec
   const navigate = useNavigate();
   const { state } = useAppData();
   const { projectFinancials } = useCalculations();
+  const { user } = useAuth();
 
-  const activeProjects = state.projects.filter((p) => p.status === 'active');
+  const isAdmin = user?.role === 'admin';
+  const currentPartner = state.partners.find(p => p.name === user?.name);
+
+  // partner 角色只显示自己参与的项目
+  const activeProjects = state.projects
+    .filter((p) => p.status === 'active')
+    .filter((p) => isAdmin || (currentPartner && p.partnerIds.includes(currentPartner.id)));
 
   const [orderedIds, setOrderedIds] = useState<string[]>(() => {
     try {
@@ -281,13 +289,14 @@ export function ProjectSharingCards({ offlineProjectId, selectedPeriod }: Projec
       ...activeProject.partnerIds,
       activeProject.prioritySharing?.partnerId,
     ].filter(Boolean) as string[]);
-    return [...partnerIds].map((pid) => {
+    const allMembers = [...partnerIds].map((pid) => {
       const partner = state.partners.find((p) => p.id === pid);
       const expected = calcPartnerExpectedShare(activeProject, financials, pid, state.partners);
       const periodFilter = activeProject.id === offlineProjectId && selectedPeriod ? selectedPeriod : undefined;
       const paid = calcPartnerPaid(state.sharingRecords, activeProject.id, pid, periodFilter);
       return { id: pid, name: partner?.name ?? pid, expected, paid, unpaid: expected - paid };
     }).filter((m) => m.expected > 0);
+    return isAdmin ? allMembers : allMembers.filter((m) => currentPartner && m.id === currentPartner.id);
   })() : [];
 
   return (
@@ -303,13 +312,18 @@ export function ProjectSharingCards({ offlineProjectId, selectedPeriod }: Projec
               project.prioritySharing?.partnerId,
             ].filter(Boolean) as string[]);
 
-            const members = [...partnerIds].map((pid) => {
+            const allMembers = [...partnerIds].map((pid) => {
               const partner = state.partners.find((p) => p.id === pid);
               const expected = calcPartnerExpectedShare(project, financials, pid, state.partners);
               const periodFilter = project.id === offlineProjectId && selectedPeriod ? selectedPeriod : undefined;
               const paid = calcPartnerPaid(state.sharingRecords, project.id, pid, periodFilter);
               return { id: pid, name: partner?.name ?? pid, expected, paid, unpaid: expected - paid };
             }).filter((m) => m.expected > 0);
+
+            // partner 角色只显示自己
+            const members = isAdmin
+              ? allMembers
+              : allMembers.filter((m) => currentPartner && m.id === currentPartner.id);
 
             return (
               <SortableProjectCard

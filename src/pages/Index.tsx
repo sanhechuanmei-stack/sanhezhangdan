@@ -4,11 +4,20 @@ import { StatsCards } from "@/components/dashboard/StatsCards";
 import { ProjectSharingCards } from "@/components/dashboard/ProjectSharingCards";
 import { SharingOverview } from "@/components/dashboard/SharingOverview";
 import { YearEndBonus } from "@/components/dashboard/YearEndBonus";
+import { FinexyDashboard } from "@/components/finexy/FinexyDashboard";
 import { useAppData } from "@/hooks/useAppData";
+import { useAuth } from "@/context/AuthContext";
 import { getProjectPeriods } from "@/lib/calculations";
 
 const Index = () => {
   const { state } = useAppData();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
+  // partner 用户（小靓、橙子）使用 Finexy 新版 UI
+  if (!isAdmin && user) {
+    return <FinexyDashboard />;
+  }
 
   // Find the project that has period-based bills
   const offlineProject = useMemo(() =>
@@ -28,10 +37,12 @@ const Index = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6 w-full">
-      {/* AI Quick Entry */}
-      <section>
-        <AIQuickEntry />
-      </section>
+      {/* AI Quick Entry — 仅 admin 可见 */}
+      {isAdmin && (
+        <section>
+          <AIQuickEntry />
+        </section>
+      )}
 
       {/* Top Row: Stats Cards (left) + Sharing Overview (right) */}
       <section>

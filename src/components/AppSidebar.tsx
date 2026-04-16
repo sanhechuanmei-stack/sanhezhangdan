@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useState, useCallback, useMemo } from "react";
 import { useAppData } from "@/hooks/useAppData";
+import { useAuth } from "@/context/AuthContext";
 
 const mainItems = [
   { title: "总览", url: "/", icon: LayoutDashboard },
@@ -59,6 +60,10 @@ export function AppSidebar() {
   const location = useLocation();
   const [basicOpen, setBasicOpen] = useState(true);
   const { state: appState } = useAppData();
+  const { user } = useAuth();
+
+  const isAdmin = user?.role === 'admin';
+  const currentPartner = appState.partners.find(p => p.name === user?.name);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -68,16 +73,20 @@ export function AppSidebar() {
     }
   }, [isMobile, setOpenMobile]);
 
-  // 动态生成业务菜单
+  // 动态生成业务菜单 — partner 只显示自己参与的项目
   const businessItems = useMemo(() => {
     return appState.projects
       .filter((p) => p.status === 'active')
+      .filter((p) => isAdmin || (currentPartner && p.partnerIds.includes(currentPartner.id)))
       .map((p) => ({
         title: p.name,
         url: `/business/${p.id}`,
         icon: ICON_MAP[p.name] || TYPE_ICON_MAP[p.type] || FolderKanban,
       }));
-  }, [appState.projects]);
+  }, [appState.projects, isAdmin, currentPartner]);
+
+  // partner 角色的管理菜单（保留年度统计和分成管理）
+  const visibleOtherItems = otherItems;
 
   return (
     <Sidebar collapsible="icon" className="border-none">
@@ -115,44 +124,46 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Basic Info */}
-        <SidebarGroup>
-          <SidebarGroupLabel
-            className="text-[hsl(240_4%_60%)] text-[11px] uppercase tracking-[0.08em] cursor-pointer flex items-center justify-between px-3 font-semibold"
-            onClick={() => setBasicOpen(!basicOpen)}
-          >
-            {!collapsed && (
-              <>
-                <span>基础信息</span>
-                <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${basicOpen ? "" : "-rotate-90"}`} />
-              </>
+        {/* Basic Info — 仅 admin 可见 */}
+        {isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel
+              className="text-[hsl(240_4%_60%)] text-[11px] uppercase tracking-[0.08em] cursor-pointer flex items-center justify-between px-3 font-semibold"
+              onClick={() => setBasicOpen(!basicOpen)}
+            >
+              {!collapsed && (
+                <>
+                  <span>基础信息</span>
+                  <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${basicOpen ? "" : "-rotate-90"}`} />
+                </>
+              )}
+            </SidebarGroupLabel>
+            {basicOpen && (
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {basicItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild>
+                        <NavLink
+                          to={item.url}
+                          end
+                          onClick={handleNavClick}
+                          className={`flex items-center gap-3 px-3 py-2 rounded-[10px] transition-all duration-200 text-[hsl(240_4%_46%)] hover:text-foreground hover:bg-[hsl(240_5%_96%)] ${
+                            isActive(item.url) ? "sidebar-pill-active" : ""
+                          }`}
+                          activeClassName="sidebar-pill-active"
+                        >
+                          <item.icon className="h-[18px] w-[18px] shrink-0" />
+                          {!collapsed && <span className="text-[13px] font-medium">{item.title}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
             )}
-          </SidebarGroupLabel>
-          {basicOpen && (
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {basicItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink
-                        to={item.url}
-                        end
-                        onClick={handleNavClick}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-[10px] transition-all duration-200 text-[hsl(240_4%_46%)] hover:text-foreground hover:bg-[hsl(240_5%_96%)] ${
-                          isActive(item.url) ? "sidebar-pill-active" : ""
-                        }`}
-                        activeClassName="sidebar-pill-active"
-                      >
-                        <item.icon className="h-[18px] w-[18px] shrink-0" />
-                        {!collapsed && <span className="text-[13px] font-medium">{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          )}
-        </SidebarGroup>
+          </SidebarGroup>
+        )}
 
         {/* Business */}
         <SidebarGroup>
@@ -184,33 +195,35 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {/* Other */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-[hsl(240_4%_60%)] text-[11px] uppercase tracking-[0.08em] px-3 font-semibold">
-            {!collapsed && "管理"}
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {otherItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end
-                      onClick={handleNavClick}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-[10px] transition-all duration-200 text-[hsl(240_4%_46%)] hover:text-foreground hover:bg-[hsl(240_5%_96%)] ${
-                        isActive(item.url) ? "sidebar-pill-active" : ""
-                      }`}
-                      activeClassName="sidebar-pill-active"
-                    >
-                      <item.icon className="h-[18px] w-[18px] shrink-0" />
-                      {!collapsed && <span className="text-[13px] font-medium">{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {visibleOtherItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-[hsl(240_4%_60%)] text-[11px] uppercase tracking-[0.08em] px-3 font-semibold">
+              {!collapsed && "管理"}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {visibleOtherItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        end
+                        onClick={handleNavClick}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-[10px] transition-all duration-200 text-[hsl(240_4%_46%)] hover:text-foreground hover:bg-[hsl(240_5%_96%)] ${
+                          isActive(item.url) ? "sidebar-pill-active" : ""
+                        }`}
+                        activeClassName="sidebar-pill-active"
+                      >
+                        <item.icon className="h-[18px] w-[18px] shrink-0" />
+                        {!collapsed && <span className="text-[13px] font-medium">{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
     </Sidebar>
   );

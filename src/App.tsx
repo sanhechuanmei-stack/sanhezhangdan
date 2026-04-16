@@ -4,8 +4,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppDataProvider } from "@/context/AppDataContext";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { useAppData } from "@/hooks/useAppData";
 import AppLayout from "@/components/AppLayout";
+import LoginPage from "./pages/LoginPage";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import PartnersPage from "./pages/PartnersPage";
@@ -17,31 +19,59 @@ import AnnualStatsPage from "./pages/AnnualStatsPage";
 
 const queryClient = new QueryClient();
 
+// 未登录时跳转到登录页
+function RequireAuth({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+}
+
+// partner 角色禁止访问的路由
+const ADMIN_ONLY_PATHS = ['/partners', '/projects', '/expense-categories', '/annual-stats'];
+
+function RequireAdmin({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  if (user?.role !== 'admin') return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <AppDataProvider>
-        <BrowserRouter>
-          <AppLayout>
+      <AuthProvider>
+        <AppDataProvider>
+          <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/partners" element={<PartnersPage />} />
-              <Route path="/projects" element={<ProjectsPage />} />
-              <Route path="/expense-categories" element={<ExpenseCategoriesPage />} />
-              <Route path="/business/:projectId" element={<DynamicBusinessPage />} />
-              {/* 旧路由兼容重定向 */}
-              <Route path="/yanxishe" element={<LegacyRedirect name="研习社" />} />
-              <Route path="/xiaojiandao" element={<LegacyRedirect name="三和·小剪刀" />} />
-              <Route path="/offline-course" element={<LegacyRedirect name="线下课" />} />
-              <Route path="/sharing" element={<SharingPage />} />
-              <Route path="/annual-stats" element={<AnnualStatsPage />} />
-              <Route path="*" element={<NotFound />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route
+                path="/*"
+                element={
+                  <RequireAuth>
+                    <AppLayout>
+                      <Routes>
+                        <Route path="/" element={<Index />} />
+                        <Route path="/partners" element={<RequireAdmin><PartnersPage /></RequireAdmin>} />
+                        <Route path="/projects" element={<RequireAdmin><ProjectsPage /></RequireAdmin>} />
+                        <Route path="/expense-categories" element={<RequireAdmin><ExpenseCategoriesPage /></RequireAdmin>} />
+                        <Route path="/business/:projectId" element={<DynamicBusinessPage />} />
+                        {/* 旧路由兼容重定向 */}
+                        <Route path="/yanxishe" element={<LegacyRedirect name="研习社" />} />
+                        <Route path="/xiaojiandao" element={<LegacyRedirect name="三和·小剪刀" />} />
+                        <Route path="/offline-course" element={<LegacyRedirect name="线下课" />} />
+                        <Route path="/sharing" element={<SharingPage />} />
+                        <Route path="/annual-stats" element={<AnnualStatsPage />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </AppLayout>
+                  </RequireAuth>
+                }
+              />
             </Routes>
-          </AppLayout>
-        </BrowserRouter>
-      </AppDataProvider>
+          </BrowserRouter>
+        </AppDataProvider>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

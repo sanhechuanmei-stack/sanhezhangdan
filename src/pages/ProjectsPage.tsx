@@ -274,7 +274,7 @@ export default function ProjectsPage() {
       >
         <div className="space-y-2">
           <Label>项目名称</Label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="请输入项目名称" onKeyDown={(e) => e.key === 'Enter' && validateAndSave()} />
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="请输入项目名称" />
         </div>
 
         <div className="space-y-2">
@@ -356,7 +356,6 @@ export default function ProjectsPage() {
                       step="0.01"
                       value={ratios[id] ?? ''}
                       onChange={(e) => setRatios((prev) => ({ ...prev, [id]: e.target.value }))}
-                      onKeyDown={(e) => e.key === 'Enter' && validateAndSave()}
                       placeholder="0"
                       className="w-24"
                     />
@@ -390,7 +389,6 @@ export default function ProjectsPage() {
               max="100"
               value={priorityPct}
               onChange={(e) => setPriorityPct(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && validateAndSave()}
               placeholder="比例"
               className="w-24"
             />
@@ -493,7 +491,7 @@ export default function ProjectsPage() {
 
         <div className="space-y-2">
           <Label>备注（可选）</Label>
-          <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="备注信息" onKeyDown={(e) => e.key === 'Enter' && validateAndSave()} />
+          <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="备注信息" />
         </div>
       </FormDialog>
 

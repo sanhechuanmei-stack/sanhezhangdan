@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { LayoutList, BarChart2 } from 'lucide-react';
 import { useAppData } from '@/hooks/useAppData';
 import { useCalculations } from '@/hooks/useCalculations';
+import { useAuth } from '@/context/AuthContext';
 
 const BAR_ROWS = [
   { label: '应分', key: 'expected' as const, color: 'hsl(var(--accent-blue))' },
@@ -51,10 +52,16 @@ export function SharingOverview() {
   const navigate = useNavigate();
   const { state } = useAppData();
   const { partnerSummaries } = useCalculations();
+  const { user } = useAuth();
   const [view, setView] = useState<'chart' | 'list'>('chart');
   const [page, setPage] = useState<'main' | 'special'>('main');
 
+  const isAdmin = user?.role === 'admin';
+  const currentPartner = state.partners.find(p => p.name === user?.name);
+
   const filteredPartners = state.partners.filter((p) => {
+    // partner 角色只显示自己
+    if (!isAdmin && currentPartner && p.id !== currentPartner.id) return false;
     const summary = partnerSummaries.find((s) => s.partnerId === p.id);
     const hasData = summary && summary.expected > 0;
     const matchType = (p.type ?? 'main') === page;

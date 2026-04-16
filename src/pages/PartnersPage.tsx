@@ -228,7 +228,6 @@ export default function PartnersPage() {
             value={nameInput}
             onChange={(e) => setNameInput(e.target.value)}
             placeholder="请输入姓名"
-            onKeyDown={(e) => e.key === 'Enter' && handleSave()}
           />
         </div>
         <div className="space-y-2">

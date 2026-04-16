@@ -271,7 +271,6 @@ export function AIQuickEntry() {
             value={cAmount}
             onChange={(e) => setCAmount(e.target.value)}
             placeholder="0.00"
-            onKeyDown={(e) => e.key === 'Enter' && handleConfirm()}
           />
         </div>
 
@@ -283,7 +282,7 @@ export function AIQuickEntry() {
         {cType === 'income' ? (
           <div className="space-y-2">
             <Label>备注（可选）</Label>
-            <Input value={cIncomeNote} onChange={(e) => setCIncomeNote(e.target.value)} placeholder="收入说明" onKeyDown={(e) => e.key === 'Enter' && handleConfirm()} />
+            <Input value={cIncomeNote} onChange={(e) => setCIncomeNote(e.target.value)} placeholder="收入说明" />
           </div>
         ) : (
           <>
@@ -302,7 +301,7 @@ export function AIQuickEntry() {
             </div>
             <div className="space-y-2">
               <Label>支出备注（可选）</Label>
-              <Input value={cExpNote} onChange={(e) => setCExpNote(e.target.value)} placeholder="支出说明" onKeyDown={(e) => e.key === 'Enter' && handleConfirm()} />
+              <Input value={cExpNote} onChange={(e) => setCExpNote(e.target.value)} placeholder="支出说明" />
             </div>
           </>
         )}

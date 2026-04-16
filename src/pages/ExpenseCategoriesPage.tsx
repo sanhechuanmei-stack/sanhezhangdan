@@ -141,7 +141,6 @@ export default function ExpenseCategoriesPage() {
             value={nameInput}
             onChange={(e) => setNameInput(e.target.value)}
             placeholder="请输入分类名称"
-            onKeyDown={(e) => e.key === 'Enter' && handleSave()}
           />
         </div>
       </FormDialog>

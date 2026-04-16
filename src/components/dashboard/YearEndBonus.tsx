@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { useAppData } from '@/hooks/useAppData';
 import { useCalculations } from '@/hooks/useCalculations';
+import { useAuth } from '@/context/AuthContext';
 import { DatePicker } from '@/components/shared/DatePicker';
 import { toast } from 'sonner';
 
@@ -101,6 +102,7 @@ function FireworksCanvas({ active }: { active: boolean }) {
 export function YearEndBonus() {
   const { state, addSharing, deleteSharing } = useAppData();
   const { yearEndBonus } = useCalculations();
+  const { user } = useAuth();
   const [expandedPartners, setExpandedPartners] = useState<Set<string>>(new Set());
   const [view, setView] = useState<View>('main');
   const [fireworks, setFireworks] = useState(false);
@@ -111,13 +113,22 @@ export function YearEndBonus() {
   const [allocDate, setAllocDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [allocNote, setAllocNote] = useState('');
 
+  const isAdmin = user?.role === 'admin';
+  const currentPartner = state.partners.find(p => p.name === user?.name);
+
   const fmt = (n: number) => '¥' + n.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  const totalPaid = yearEndBonus.byPartner.reduce((s, p) => s + p.paid, 0);
-  const totalUnpaid = yearEndBonus.byPartner.reduce((s, p) => s + p.unpaid, 0);
+  // partner 角色只显示自己的数据
+  const filteredByPartner = isAdmin
+    ? yearEndBonus.byPartner
+    : yearEndBonus.byPartner.filter(p => currentPartner && p.partnerId === currentPartner.id);
+
+  const totalPaid = filteredByPartner.reduce((s, p) => s + p.paid, 0);
+  const totalUnpaid = filteredByPartner.reduce((s, p) => s + p.unpaid, 0);
 
   const yearEndRecords = state.sharingRecords
     .filter((r) => r.isYearEnd)
+    .filter((r) => isAdmin || (currentPartner && r.partnerId === currentPartner.id))
     .sort((a, b) => b.date.localeCompare(a.date));
 
   function handleOpenChange(open: boolean) {
@@ -300,8 +311,10 @@ export function YearEndBonus() {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <span className="text-sm font-semibold text-apple-green num-display">{fmt(r.amount)}</span>
-                        <button onClick={() => { deleteSharing(r.id); toast.success('已删除'); }}
-                          className="text-[11px] text-muted-foreground hover:text-destructive transition-colors px-1">删除</button>
+                        {isAdmin && (
+                          <button onClick={() => { deleteSharing(r.id); toast.success('已删除'); }}
+                            className="text-[11px] text-muted-foreground hover:text-destructive transition-colors px-1">删除</button>
+                        )}
                       </div>
                     </div>
                   );
@@ -330,7 +343,7 @@ export function YearEndBonus() {
               <div>
                 <h4 className="text-[11px] font-semibold text-foreground mb-1.5 uppercase tracking-wider">各合伙人年底预计可分</h4>
                 <div className="space-y-1">
-                  {yearEndBonus.byPartner.map((item) => {
+                  {filteredByPartner.map((item) => {
                     const partner = state.partners.find((p) => p.id === item.partnerId);
                     const name = partner?.name ?? item.partnerId;
                     const isExpanded = expandedPartners.has(item.partnerId);
@@ -349,11 +362,13 @@ export function YearEndBonus() {
                               <div className="text-[13px] font-semibold text-apple-red num-display">{fmt(item.unpaid)}</div>
                               {item.paid > 0 && <div className="text-[10px] text-muted-foreground">已分 {fmt(item.paid)}</div>}
                             </div>
-                            <button onClick={() => openAlloc(item.partnerId, name)} disabled={item.unpaid <= 0}
-                              className="flex items-center gap-1 px-2 py-1 sm:px-3 rounded-lg bg-primary/8 text-primary text-[11px] font-medium hover:bg-primary/15 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
-                              <Plus className="h-3 w-3" />
-                              <span className="hidden sm:inline">记录分配</span>
-                            </button>
+                            {isAdmin && (
+                              <button onClick={() => openAlloc(item.partnerId, name)} disabled={item.unpaid <= 0}
+                                className="flex items-center gap-1 px-2 py-1 sm:px-3 rounded-lg bg-primary/8 text-primary text-[11px] font-medium hover:bg-primary/15 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                                <Plus className="h-3 w-3" />
+                                <span className="hidden sm:inline">记录分配</span>
+                              </button>
+                            )}
                           </div>
                         </div>
                         {isExpanded && item.byProject.length > 0 && (
@@ -379,7 +394,7 @@ export function YearEndBonus() {
                       </div>
                     );
                   })}
-                  {yearEndBonus.byPartner.length === 0 && (
+                  {filteredByPartner.length === 0 && (
                     <p className="text-sm text-muted-foreground text-center py-2">暂无数据</p>
                   )}
                 </div>

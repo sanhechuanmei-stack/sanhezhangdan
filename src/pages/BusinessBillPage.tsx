@@ -9,6 +9,7 @@ import { DateRangePicker } from '@/components/shared/DateRangePicker';
 import { DatePicker } from '@/components/shared/DatePicker';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/context/AuthContext';
 import type { BillRecord } from '@/types';
 
 interface BusinessBillPageProps {
@@ -20,7 +21,10 @@ interface BusinessBillPageProps {
 
 export function BusinessBillPage({ projectId, title, accentColor, showPeriodFilter }: BusinessBillPageProps) {
   const { state, addBill, updateBill, deleteBill } = useAppData();
+  const { user } = useAuth();
   const project = state.projects.find((p) => p.id === projectId);
+
+  const isAdmin = user?.role === 'admin';
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<BillRecord | null>(null);
@@ -145,14 +149,16 @@ export function BusinessBillPage({ projectId, title, accentColor, showPeriodFilt
     <div className="space-y-4 sm:space-y-6 w-full">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground">{title}</h1>
-        <button
-          onClick={openAdd}
-          className="flex items-center gap-1.5 sm:gap-2 bg-primary text-primary-foreground rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium hover:opacity-90 transition-opacity"
-        >
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">新增账目</span>
-          <span className="sm:hidden">新增</span>
-        </button>
+        {isAdmin && (
+          <button
+            onClick={openAdd}
+            className="flex items-center gap-1.5 sm:gap-2 bg-primary text-primary-foreground rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">新增账目</span>
+            <span className="sm:hidden">新增</span>
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -222,12 +228,16 @@ export function BusinessBillPage({ projectId, title, accentColor, showPeriodFilt
                       <Paperclip className="h-3.5 w-3.5" />
                     </a>
                   )}
-                  <button onClick={() => openEdit(b)} className="p-1 text-muted-foreground hover:text-foreground">
-                    <Pencil className="h-3.5 w-3.5" />
-                  </button>
-                  <button onClick={() => setDeleteTarget(b)} className="p-1 text-muted-foreground hover:text-destructive">
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  {isAdmin && (
+                    <>
+                      <button onClick={() => openEdit(b)} className="p-1 text-muted-foreground hover:text-foreground">
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button onClick={() => setDeleteTarget(b)} className="p-1 text-muted-foreground hover:text-destructive">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
               {b.income !== undefined && (
@@ -335,20 +345,22 @@ export function BusinessBillPage({ projectId, title, accentColor, showPeriodFilt
                       )}
                     </td>
                     <td className="px-3 py-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => openEdit(b)}
-                          className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => setDeleteTarget(b)}
-                          className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
+                      {isAdmin && (
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => openEdit(b)}
+                            className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => setDeleteTarget(b)}
+                            className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -407,11 +419,11 @@ export function BusinessBillPage({ projectId, title, accentColor, showPeriodFilt
           <>
             <div className="space-y-2">
               <Label>收入金额</Label>
-              <Input type="number" min="0" step="0.01" value={fIncome} onChange={(e) => setFIncome(e.target.value)} placeholder="0.00" onKeyDown={(e) => e.key === 'Enter' && handleSave()} />
+              <Input type="number" min="0" step="0.01" value={fIncome} onChange={(e) => setFIncome(e.target.value)} placeholder="0.00" />
             </div>
             <div className="space-y-2">
               <Label>备注（可选）</Label>
-              <Input value={fIncomeNote} onChange={(e) => setFIncomeNote(e.target.value)} placeholder="收入说明" onKeyDown={(e) => e.key === 'Enter' && handleSave()} />
+              <Input value={fIncomeNote} onChange={(e) => setFIncomeNote(e.target.value)} placeholder="收入说明" />
             </div>
           </>
         ) : (
@@ -431,11 +443,11 @@ export function BusinessBillPage({ projectId, title, accentColor, showPeriodFilt
             </div>
             <div className="space-y-2">
               <Label>支出金额</Label>
-              <Input type="number" min="0" step="0.01" value={fExpense} onChange={(e) => setFExpense(e.target.value)} placeholder="0.00" onKeyDown={(e) => e.key === 'Enter' && handleSave()} />
+              <Input type="number" min="0" step="0.01" value={fExpense} onChange={(e) => setFExpense(e.target.value)} placeholder="0.00" />
             </div>
             <div className="space-y-2">
               <Label>支出备注（可选）</Label>
-              <Input value={fExpNote} onChange={(e) => setFExpNote(e.target.value)} placeholder="支出说明" onKeyDown={(e) => e.key === 'Enter' && handleSave()} />
+              <Input value={fExpNote} onChange={(e) => setFExpNote(e.target.value)} placeholder="支出说明" />
             </div>
           </>
         )}
@@ -471,14 +483,14 @@ export function BusinessBillPage({ projectId, title, accentColor, showPeriodFilt
         {extraFields.includes('customerName') && (
           <div className="space-y-2">
             <Label>客户姓名（可选）</Label>
-            <Input value={fCustomerName} onChange={(e) => setFCustomerName(e.target.value)} placeholder="客户姓名" onKeyDown={(e) => e.key === 'Enter' && handleSave()} />
+            <Input value={fCustomerName} onChange={(e) => setFCustomerName(e.target.value)} placeholder="客户姓名" />
           </div>
         )}
 
         {extraFields.includes('customerPhone') && (
           <div className="space-y-2">
             <Label>手机号（可选）</Label>
-            <Input value={fCustomerPhone} onChange={(e) => setFCustomerPhone(e.target.value)} placeholder="手机号" onKeyDown={(e) => e.key === 'Enter' && handleSave()} />
+            <Input value={fCustomerPhone} onChange={(e) => setFCustomerPhone(e.target.value)} placeholder="手机号" />
           </div>
         )}
 

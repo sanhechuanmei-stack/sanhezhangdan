@@ -12,11 +12,16 @@ import { DateRangePicker } from '@/components/shared/DateRangePicker';
 import { DatePicker } from '@/components/shared/DatePicker';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/context/AuthContext';
 import type { SharingRecord } from '@/types';
 
 export default function SharingPage() {
   const { state, addSharing, updateSharing, deleteSharing } = useAppData();
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
+
+  const isAdmin = user?.role === 'admin';
+  const currentPartner = state.partners.find(p => p.name === user?.name);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<SharingRecord | null>(null);
@@ -64,10 +69,11 @@ export default function SharingPage() {
       })()
     : state.partners;
 
-  // Filtered records
+  // Filtered records — partner 角色只显示自己的
   const filteredRecords = state.sharingRecords
     .filter((r) => {
       if (r.isYearEnd) return false;
+      if (!isAdmin && currentPartner && r.partnerId !== currentPartner.id) return false;
       if (filterProjectId !== 'all' && r.projectId !== filterProjectId) return false;
       if (filterPartnerId !== 'all' && r.partnerId !== filterPartnerId) return false;
       if (filterFrom && r.date < filterFrom) return false;
@@ -157,14 +163,16 @@ export default function SharingPage() {
     <div className="space-y-4 sm:space-y-6 w-full">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground">分成管理</h1>
-        <button
-          onClick={openAdd}
-          className="flex items-center gap-1.5 sm:gap-2 bg-primary text-primary-foreground rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium hover:opacity-90 transition-opacity"
-        >
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">新增分成记录</span>
-          <span className="sm:hidden">新增</span>
-        </button>
+        {isAdmin && (
+          <button
+            onClick={openAdd}
+            className="flex items-center gap-1.5 sm:gap-2 bg-primary text-primary-foreground rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">新增分成记录</span>
+            <span className="sm:hidden">新增</span>
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -235,12 +243,16 @@ export default function SharingPage() {
                         <Paperclip className="h-3.5 w-3.5" />
                       </a>
                     )}
-                    <button onClick={() => openEdit(r)} className="p-1 text-muted-foreground hover:text-foreground">
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button onClick={() => setDeleteTarget(r)} className="p-1 text-muted-foreground hover:text-destructive">
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    {isAdmin && (
+                      <>
+                        <button onClick={() => openEdit(r)} className="p-1 text-muted-foreground hover:text-foreground">
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button onClick={() => setDeleteTarget(r)} className="p-1 text-muted-foreground hover:text-destructive">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
@@ -304,20 +316,22 @@ export default function SharingPage() {
                       )}
                     </td>
                     <td className="p-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => openEdit(r)}
-                          className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => setDeleteTarget(r)}
-                          className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
+                      {isAdmin && (
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => openEdit(r)}
+                            className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => setDeleteTarget(r)}
+                            className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );
@@ -409,7 +423,7 @@ export default function SharingPage() {
 
         <div className="space-y-2">
           <Label>备注（可选）</Label>
-          <Input value={fNote} onChange={(e) => setFNote(e.target.value)} placeholder="备注信息" onKeyDown={(e) => e.key === 'Enter' && handleSave()} />
+          <Input value={fNote} onChange={(e) => setFNote(e.target.value)} placeholder="备注信息" />
         </div>
 
         <div className="space-y-2">
