@@ -346,6 +346,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, initState);
   const [cloudReady, setCloudReady] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const [cloudFailed, setCloudFailed] = useState(false);
 
   // 启动时从云端加载数据
   useEffect(() => {
@@ -360,6 +361,27 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           cloudData.expenseCategories = [...cloudData.expenseCategories, ...missing];
         }
         dispatch({ type: 'LOAD_FROM_CLOUD', payload: cloudData });
+      } else {
+        // 云端没有数据或加载失败，检查本地是否有真实数据
+        const localRaw = localStorage.getItem(STORAGE_KEY);
+        if (localRaw) {
+          try {
+            const localData = JSON.parse(localRaw) as AppState;
+            // 如果本地数据包含 seed data 的特征（如喵喵龙），说明是假数据，不要同步
+            const hasSeedPartner = localData.partners?.some((p) => p.id === 'p4');
+            const hasSeedProject = localData.projects?.some((p) => p.id === 'proj2');
+            if (hasSeedPartner || hasSeedProject) {
+              console.warn('检测到本地为种子数据，云端加载失败，跳过同步防止数据覆盖');
+              setCloudFailed(true);
+            } else {
+              // 本地有真实数据但云端为空，可以同步上去
+            }
+          } catch {
+            setCloudFailed(true);
+          }
+        } else {
+          // 本地也为空，云端也为空，这是全新设备
+        }
       }
       setCloudReady(true);
       setInitialized(true);
@@ -367,11 +389,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // 状态变更时同步到 localStorage + 云端
+  // 仅在云端数据已成功加载或确认安全后才同步，防止种子数据覆盖云端
   useEffect(() => {
     if (!initialized) return;
+    if (cloudFailed) {
+      // 云端加载失败且本地是种子数据，只写本地不同步云端
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      return;
+    }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     syncToCloud(state);
-  }, [state, initialized]);
+  }, [state, initialized, cloudFailed]);
 
   return (
     <AppDataContext.Provider value={{ state, dispatch, cloudReady }}>
