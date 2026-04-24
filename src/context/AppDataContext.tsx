@@ -2,6 +2,7 @@ import { createContext, useContext, useReducer, useEffect, useState, type ReactN
 import type { Partner, Project, BillRecord, SharingRecord, ExpenseCategory } from '@/types';
 import { getSeedData } from '@/lib/seedData';
 import { supabase } from '@/lib/supabase';
+import { saveBackup } from '@/lib/backup';
 
 export interface AppState {
   partners: Partner[];
@@ -399,6 +400,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     syncToCloud(state);
+    saveBackup(state);
   }, [state, initialized, cloudFailed]);
 
   return (

@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, RotateCcw } from 'lucide-react';
+import { loadBackup, getBackupInfo } from '@/lib/backup';
+
+const STORAGE_KEY = 'xiaoyan-qianfang-data';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -14,6 +17,12 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [backupInfo, setBackupInfo] = useState<{ date: string; billCount: number } | null>(null);
+  const [restoring, setRestoring] = useState(false);
+
+  useEffect(() => {
+    getBackupInfo().then(setBackupInfo);
+  }, []);
 
   function handleLogin() {
     setError('');
@@ -26,6 +35,25 @@ export default function LoginPage() {
       navigate('/', { replace: true });
     } else {
       setError(result.error || '登录失败');
+    }
+  }
+
+  async function handleRestore() {
+    if (!confirm('确定要从备份恢复数据吗？当前浏览器中的数据将被覆盖。')) return;
+    setRestoring(true);
+    try {
+      const backup = await loadBackup();
+      if (!backup) {
+        alert('没有找到备份数据');
+        return;
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(backup));
+      alert('数据恢复成功！页面将刷新。');
+      window.location.reload();
+    } catch {
+      alert('恢复失败，请重试');
+    } finally {
+      setRestoring(false);
     }
   }
 
@@ -83,6 +111,25 @@ export default function LoginPage() {
             {loading ? '登录中...' : '登录'}
           </Button>
         </div>
+
+        {/* Backup Restore */}
+        {backupInfo && (
+          <div className="text-center space-y-2">
+            <p className="text-xs text-muted-foreground">
+              本地备份：{backupInfo.date}（{backupInfo.billCount} 条账单）
+            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRestore}
+              disabled={restoring}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              <RotateCcw className="h-3 w-3 mr-1" />
+              {restoring ? '恢复中...' : '从备份恢复数据'}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
