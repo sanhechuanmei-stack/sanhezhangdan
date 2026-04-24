@@ -1,13 +1,16 @@
+import { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { Download, LogOut } from "lucide-react";
+import { Download, LogOut, RotateCcw } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import FinexyLayout from "@/components/finexy/FinexyLayout";
+import { loadBackup, getBackupInfo } from "@/lib/backup";
+
+const STORAGE_KEY = 'xiaoyan-qianfang-data';
 
 function ExportButton() {
   function handleExport() {
-    const STORAGE_KEY = 'xiaoyan-qianfang-data';
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
       alert('暂无数据可导出');
@@ -27,10 +30,53 @@ function ExportButton() {
     <button
       onClick={handleExport}
       className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2.5 py-1.5 rounded-lg hover:bg-muted/50"
-      title="导出备份"
+      title="下载备份到本地"
     >
       <Download className="h-4 w-4" />
-      <span className="hidden sm:inline">导出备份</span>
+      <span className="hidden sm:inline">下载备份</span>
+    </button>
+  );
+}
+
+function RestoreButton() {
+  const [backupInfo, setBackupInfo] = useState<{ date: string; billCount: number } | null>(null);
+  const [restoring, setRestoring] = useState(false);
+
+  useEffect(() => {
+    getBackupInfo().then(setBackupInfo);
+  }, []);
+
+  async function handleRestore() {
+    if (!backupInfo) return;
+    if (!confirm(`确定要从备份恢复数据吗？\n\n备份时间：${backupInfo.date}\n账单数量：${backupInfo.billCount} 条\n\n当前数据将被覆盖！`)) return;
+    setRestoring(true);
+    try {
+      const backup = await loadBackup();
+      if (!backup) {
+        alert('没有找到备份数据');
+        return;
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(backup));
+      alert('数据恢复成功！页面将刷新。');
+      window.location.reload();
+    } catch {
+      alert('恢复失败，请重试');
+    } finally {
+      setRestoring(false);
+    }
+  }
+
+  if (!backupInfo) return null;
+
+  return (
+    <button
+      onClick={handleRestore}
+      disabled={restoring}
+      className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2.5 py-1.5 rounded-lg hover:bg-muted/50"
+      title={`从备份恢复（${backupInfo.date}，${backupInfo.billCount}条账单）`}
+    >
+      <RotateCcw className="h-4 w-4" />
+      <span className="hidden sm:inline">{restoring ? '恢复中...' : '恢复备份'}</span>
     </button>
   );
 }
@@ -82,6 +128,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors" />
             <span className="ml-3 text-sm font-display font-semibold text-foreground md:hidden tracking-tight">小言千方</span>
             <div className="ml-auto flex items-center gap-3">
+              <RestoreButton />
               <ExportButton />
               <UserMenu />
             </div>
