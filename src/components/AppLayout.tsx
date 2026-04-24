@@ -30,10 +30,10 @@ function ExportButton() {
     <button
       onClick={handleExport}
       className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2.5 py-1.5 rounded-lg hover:bg-muted/50"
-      title="下载备份到本地"
+      title="导出备份"
     >
       <Download className="h-4 w-4" />
-      <span className="hidden sm:inline">下载备份</span>
+      <span className="hidden sm:inline">导出备份</span>
     </button>
   );
 }
